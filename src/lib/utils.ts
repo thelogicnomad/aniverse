@@ -33,10 +33,12 @@ export function getProxiedImageUrl(url: string): string {
   return url || '/placeholder.jpg';
 }
 
+const STREAM_PROXY = 'http://13.200.109.63:3001';
+
 export function getProxiedStreamUrl(url: string): string {
-  return `/api/stream?url=${encodeURIComponent(url)}`;
+  return `${STREAM_PROXY}/stream?url=${encodeURIComponent(url)}`;
 }
 
 export function getProxiedSubtitleUrl(url: string): string {
-  return `/api/stream?url=${encodeURIComponent(url)}`;
+  return `${STREAM_PROXY}/stream?url=${encodeURIComponent(url)}`;
 }
