@@ -33,7 +33,7 @@ export function getProxiedImageUrl(url: string): string {
   return url || '/placeholder.jpg';
 }
 
-const STREAM_PROXY = 'http://13.200.109.63:3001';
+const STREAM_PROXY = 'https://aniverse102.duckdns.org';
 
 export function getProxiedStreamUrl(url: string): string {
   return `${STREAM_PROXY}/stream?url=${encodeURIComponent(url)}`;
