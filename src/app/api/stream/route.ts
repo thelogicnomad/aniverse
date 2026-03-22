@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-
+export const runtime = 'edge';
 export const maxDuration = 30; // Vercel Pro: 30s, Hobby: 10s max
 
 export async function GET(req: NextRequest) {
