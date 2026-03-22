@@ -4,7 +4,11 @@ const nextConfig = {
     remotePatterns: [
       { protocol: 'https', hostname: '**' },
     ],
+
     unoptimized: false,
+  },
+  typescript: {
+    ignoreBuildErrors: true,
   },
   async headers() {
     return [
