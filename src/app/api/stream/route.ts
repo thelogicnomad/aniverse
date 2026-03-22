@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-export const runtime = 'edge';
+
+// Try Node.js runtime instead of Edge - might use different IP pool
+// export const runtime = 'edge';
+export const runtime = 'nodejs';
 export const maxDuration = 30; // Vercel Pro: 30s, Hobby: 10s max
 
 export async function GET(req: NextRequest) {
@@ -47,12 +50,20 @@ export async function GET(req: NextRequest) {
       const baseUrl = decoded.substring(0, decoded.lastIndexOf('/') + 1);
       console.log('[Stream API] M3U8 content length:', text.length, 'chars');
 
+      // Check if we should proxy segments or let browser fetch directly
+      // Set to false to try direct fetching (bypasses Vercel IP blocking)
+      const PROXY_SEGMENTS = false;
+
       const rewritten = text
         .split('\n')
         .map((line) => {
           const trimmed = line.trim();
           if (!trimmed || trimmed.startsWith('#')) return line;
           const absolute = trimmed.startsWith('http') ? trimmed : baseUrl + trimmed;
+          // If PROXY_SEGMENTS is false, return direct URLs for .ts segments
+          if (!PROXY_SEGMENTS && (absolute.includes('.ts') || absolute.includes('.m4s'))) {
+            return absolute; // Direct URL - browser fetches directly
+          }
           return `/api/stream?url=${encodeURIComponent(absolute)}`;
         })
         .join('\n');
