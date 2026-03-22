@@ -33,7 +33,7 @@ export function getProxiedImageUrl(url: string): string {
   return url || '/placeholder.jpg';
 }
 
-const STREAM_PROXY =  process.env.NEXT_PUBLIC_STREAM_PROXY || '';
+const STREAM_PROXY = 'https://purple-voice-4be5.lepakshidev.workers.dev';
 
 export function getProxiedStreamUrl(url: string): string {
   return `${STREAM_PROXY}/stream?url=${encodeURIComponent(url)}`;

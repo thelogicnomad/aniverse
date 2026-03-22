@@ -30,6 +30,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <main className="flex-1">{children}</main>
           <Footer />
         </Providers>
+        <script dangerouslySetInnerHTML={{__html: `
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js');
+  }
+`}} />
       </body>
     </html>
   );
