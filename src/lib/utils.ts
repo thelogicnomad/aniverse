@@ -33,12 +33,10 @@ export function getProxiedImageUrl(url: string): string {
   return url || '/placeholder.jpg';
 }
 
-const STREAM_PROXY = 'https://aniverse102.duckdns.org';
-
 export function getProxiedStreamUrl(url: string): string {
-  return `${STREAM_PROXY}/stream?url=${encodeURIComponent(url)}`;
+  return `/api/stream?url=${encodeURIComponent(url)}`;
 }
 
 export function getProxiedSubtitleUrl(url: string): string {
-  return `${STREAM_PROXY}/stream?url=${encodeURIComponent(url)}`;
+  return `/api/stream?url=${encodeURIComponent(url)}`;
 }
