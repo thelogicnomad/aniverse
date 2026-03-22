@@ -4,11 +4,19 @@ export const maxDuration = 30; // Vercel Pro: 30s, Hobby: 10s max
 
 export async function GET(req: NextRequest) {
   const urlParam = req.nextUrl.searchParams.get('url');
+  console.log('[Stream API] Request received, url param:', urlParam ? urlParam.substring(0, 100) + '...' : 'MISSING');
+
   if (!urlParam) return new NextResponse('Missing url', { status: 400 });
 
   const decoded = decodeURIComponent(urlParam);
+  const isM3U8Request = decoded.includes('.m3u8');
+  const isTsSegment = decoded.includes('.ts');
+
+  console.log('[Stream API] Decoded URL type:', isM3U8Request ? 'M3U8 playlist' : isTsSegment ? 'TS segment' : 'Other');
+  console.log('[Stream API] Fetching from:', decoded.substring(0, 80) + '...');
 
   try {
+    const startTime = Date.now();
     const res = await fetch(decoded, {
       headers: {
   'Referer': 'https://megacloud.blog/',
@@ -22,16 +30,22 @@ export async function GET(req: NextRequest) {
 },
     });
 
+    const fetchDuration = Date.now() - startTime;
+    console.log('[Stream API] Upstream response:', res.status, 'in', fetchDuration, 'ms');
+
     if (!res.ok) {
+      console.error('[Stream API] Upstream FAILED:', res.status, res.statusText);
       return new NextResponse(`Upstream error: ${res.status}`, { status: res.status });
     }
 
     const contentType = res.headers.get('content-type') ?? '';
     const isM3U8 = decoded.includes('.m3u8') || contentType.includes('mpegurl');
+    console.log('[Stream API] Content-Type:', contentType, '| isM3U8:', isM3U8);
 
     if (isM3U8) {
       const text = await res.text();
       const baseUrl = decoded.substring(0, decoded.lastIndexOf('/') + 1);
+      console.log('[Stream API] M3U8 content length:', text.length, 'chars');
 
       const rewritten = text
         .split('\n')
@@ -43,6 +57,7 @@ export async function GET(req: NextRequest) {
         })
         .join('\n');
 
+      console.log('[Stream API] M3U8 rewritten successfully, returning playlist');
       return new NextResponse(rewritten, {
         headers: {
           'Content-Type': 'application/vnd.apple.mpegurl',
@@ -53,6 +68,13 @@ export async function GET(req: NextRequest) {
     }
 
     const buffer = await res.arrayBuffer();
+    const bufferSizeKB = Math.round(buffer.byteLength / 1024);
+    console.log('[Stream API] Binary segment size:', bufferSizeKB, 'KB');
+
+    if (buffer.byteLength > 4 * 1024 * 1024) {
+      console.warn('[Stream API] WARNING: Segment exceeds 4MB edge limit! Size:', bufferSizeKB, 'KB');
+    }
+
     return new NextResponse(buffer, {
       headers: {
         'Content-Type': contentType || 'video/mp2t',
@@ -61,7 +83,9 @@ export async function GET(req: NextRequest) {
       },
     });
   } catch (err) {
-    console.error('Stream proxy error:', err);
-    return new NextResponse('Stream proxy failed', { status: 500 });
+    console.error('[Stream API] PROXY ERROR:', err);
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    console.error('[Stream API] Error details:', errorMessage);
+    return new NextResponse(`Stream proxy failed: ${errorMessage}`, { status: 500 });
   }
 }

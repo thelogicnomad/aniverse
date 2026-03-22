@@ -53,29 +53,85 @@ export default function VideoPlayer({
     const video = videoRef.current;
     if (!video || !streamUrl) return;
 
+    console.log('[VideoPlayer] Initializing with stream URL:', streamUrl.substring(0, 80) + '...');
+    console.log('[VideoPlayer] Proxied URL:', proxiedUrl);
+
     let hls: unknown = null;
 
     const initHls = async () => {
       const Hls = (await import('hls.js')).default;
+      console.log('[VideoPlayer] HLS.js loaded, isSupported:', Hls.isSupported());
+
       if (Hls.isSupported()) {
-        const instance = new Hls({ enableWorker: true });
+        const instance = new Hls({
+          enableWorker: true,
+          debug: false, // Set to true for verbose HLS.js logs
+        });
         hlsRef.current = instance;
         hls = instance;
+
+        // Error handling
+        (instance as any).on('hlsError' as any, (_event: unknown, data: unknown) => {
+          const errorData = data as { fatal?: boolean; type?: string; details?: string; response?: { code?: number } };
+          console.error('[VideoPlayer] HLS ERROR:', {
+            fatal: errorData.fatal,
+            type: errorData.type,
+            details: errorData.details,
+            responseCode: errorData.response?.code,
+          });
+
+          if (errorData.fatal) {
+            switch (errorData.type) {
+              case 'networkError':
+                console.error('[VideoPlayer] Fatal network error - attempting recovery...');
+                (instance as any).startLoad();
+                break;
+              case 'mediaError':
+                console.error('[VideoPlayer] Fatal media error - attempting recovery...');
+                (instance as any).recoverMediaError();
+                break;
+              default:
+                console.error('[VideoPlayer] Unrecoverable error, destroying HLS instance');
+                (instance as any).destroy();
+                break;
+            }
+          }
+        });
+
+        // Success events
+        (instance as any).on('hlsManifestLoaded' as any, () => {
+          console.log('[VideoPlayer] M3U8 manifest loaded successfully');
+        });
+
+        (instance as any).on('hlsFragLoaded' as any, (_event: unknown, data: unknown) => {
+          const fragData = data as { frag?: { sn?: number } };
+          console.log('[VideoPlayer] Video fragment loaded, segment:', fragData.frag?.sn);
+        });
+
         (instance as any).loadSource(proxiedUrl);
         (instance as any).attachMedia(video);
         (instance as any).on('hlsManifestParsed' as any, () => {
+          console.log('[VideoPlayer] Manifest parsed, starting playback...');
           if (startTime > 0) video.currentTime = startTime;
-          video.play().catch(() => {});
+          video.play().catch((e) => console.warn('[VideoPlayer] Autoplay blocked:', e.message));
         });
       } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        console.log('[VideoPlayer] Using native HLS (Safari)');
         video.src = proxiedUrl;
         if (startTime > 0) video.currentTime = startTime;
-        video.play().catch(() => {});
+        video.play().catch((e) => console.warn('[VideoPlayer] Autoplay blocked:', e.message));
+      } else {
+        console.error('[VideoPlayer] HLS not supported in this browser');
       }
     };
 
     initHls();
-    return () => { if (hls) (hls as { destroy: () => void }).destroy(); };
+    return () => {
+      if (hls) {
+        console.log('[VideoPlayer] Destroying HLS instance');
+        (hls as { destroy: () => void }).destroy();
+      }
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [streamUrl]);
 

@@ -16,6 +16,11 @@ export async function GET(
 
     const shouldCache = !NO_CACHE_PATHS.some((p) => apiPath.includes(p));
 
+    console.log('[API Proxy] Request:', apiPath);
+    console.log('[API Proxy] Full URL:', url);
+    console.log('[API Proxy] Caching:', shouldCache ? 'YES' : 'NO');
+
+    const startTime = Date.now();
     const res = await fetch(url, {
       headers: {
         'Content-Type': 'application/json',
@@ -27,9 +32,12 @@ export async function GET(
       ...(shouldCache ? { next: { revalidate: 300 } } : {}),
     });
 
+    const fetchDuration = Date.now() - startTime;
+    console.log('[API Proxy] Upstream response:', res.status, 'in', fetchDuration, 'ms');
+
     if (!res.ok) {
       const text = await res.text();
-      console.error(`[Proxy] Upstream ${res.status} for ${url}:`, text.slice(0, 200));
+      console.error(`[API Proxy] Upstream ${res.status} for ${url}:`, text.slice(0, 200));
       return NextResponse.json(
         { success: false, error: `Upstream error: ${res.status}` },
         { status: res.status }
@@ -37,13 +45,16 @@ export async function GET(
     }
 
     const data = await res.json();
+    console.log('[API Proxy] Success, data keys:', Object.keys(data));
+
     return NextResponse.json(data, {
       headers: shouldCache
         ? { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600' }
         : { 'Cache-Control': 'no-store' },
     });
   } catch (error) {
-    console.error('[Proxy] error:', error);
-    return NextResponse.json({ success: false, error: 'Proxy request failed' }, { status: 500 });
+    console.error('[API Proxy] FATAL error:', error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    return NextResponse.json({ success: false, error: `Proxy request failed: ${errorMessage}` }, { status: 500 });
   }
 }
