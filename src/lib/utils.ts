@@ -33,10 +33,12 @@ export function getProxiedImageUrl(url: string): string {
   return url || '/placeholder.jpg';
 }
 
+const STREAM_PROXY =  process.env.NEXT_PUBLIC_STREAM_PROXY || '';
+
 export function getProxiedStreamUrl(url: string): string {
-  return `/api/stream?url=${encodeURIComponent(url)}`;
+  return `${STREAM_PROXY}/stream?url=${encodeURIComponent(url)}`;
 }
 
 export function getProxiedSubtitleUrl(url: string): string {
-  return `/api/stream?url=${encodeURIComponent(url)}`;
+  return `${STREAM_PROXY}/stream?url=${encodeURIComponent(url)}`;
 }
