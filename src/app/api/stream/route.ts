@@ -1,6 +1,6 @@
-export const runtime = 'edge';
-
 import { NextRequest, NextResponse } from 'next/server';
+export const runtime = 'edge';
+export const maxDuration = 30; // Vercel Pro: 30s, Hobby: 10s max
 
 export async function GET(req: NextRequest) {
   const urlParam = req.nextUrl.searchParams.get('url');
@@ -8,25 +8,18 @@ export async function GET(req: NextRequest) {
 
   const decoded = decodeURIComponent(urlParam);
 
-  // Extract origin from the actual stream URL to use as Referer
-  let referer = 'https://megacloud.blog/';
-  try {
-    const u = new URL(decoded);
-    referer = `${u.protocol}//${u.hostname}/`;
-  } catch {}
-
   try {
     const res = await fetch(decoded, {
       headers: {
-        'Referer': referer,
-        'Origin': referer.slice(0, -1),
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': '*/*',
-        'Accept-Language': 'en-US,en;q=0.9',
-        'Sec-Fetch-Dest': 'empty',
-        'Sec-Fetch-Mode': 'cors',
-        'Sec-Fetch-Site': 'same-origin',
-      },
+  'Referer': 'https://megacloud.blog/',
+  'Origin': 'https://megacloud.blog',
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+  'Accept': '*/*',
+  'Accept-Language': 'en-US,en;q=0.9',
+  'Sec-Fetch-Dest': 'empty',
+  'Sec-Fetch-Mode': 'cors',
+  'Sec-Fetch-Site': 'cross-site',
+},
     });
 
     if (!res.ok) {
@@ -68,6 +61,7 @@ export async function GET(req: NextRequest) {
       },
     });
   } catch (err) {
+    console.error('Stream proxy error:', err);
     return new NextResponse('Stream proxy failed', { status: 500 });
   }
 }
