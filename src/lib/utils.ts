@@ -33,13 +33,10 @@ export function getProxiedImageUrl(url: string): string {
   return url || '/placeholder.jpg';
 }
 
-const STREAM_PROXY = 'https://purple-voice-4be5.lepakshidev.workers.dev';
-
 export function getProxiedStreamUrl(url: string): string {
-  // Route through SW proxy - browser fetches directly with residential IP
-  return `/proxy-segment?url=${encodeURIComponent(url)}`;
+  return `/api/stream?url=${encodeURIComponent(url)}`;
 }
 
 export function getProxiedSubtitleUrl(url: string): string {
-  return `${STREAM_PROXY}/stream?url=${encodeURIComponent(url)}`;
+  return `/api/stream?url=${encodeURIComponent(url)}`;
 }
