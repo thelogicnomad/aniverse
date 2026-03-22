@@ -226,7 +226,10 @@ export default function VideoPlayer({
       {/* ── Skip Intro — outside controls overlay so always clickable ── */}
       {showSkipIntro && (
         <button
-          onClick={() => { if (videoRef.current && intro) videoRef.current.currentTime = intro.end; }}
+        onClick={() => {
+  if (videoRef.current && intro && isFinite(videoRef.current.duration))
+    videoRef.current.currentTime = intro.end;
+}}
           className="absolute bottom-20 right-4 z-20 bg-primary/90 hover:bg-primary text-white text-sm font-semibold px-4 py-2 rounded-lg border border-primary/50 transition-colors flex items-center gap-2"
         >
           Skip Intro <ChevronRight className="w-4 h-4" />
@@ -236,7 +239,10 @@ export default function VideoPlayer({
       {/* ── Skip Outro — outside controls overlay so always clickable ── */}
       {showSkipOutro && (
         <button
-          onClick={() => { if (videoRef.current && outro) videoRef.current.currentTime = outro.end; }}
+        onClick={() => {
+  if (videoRef.current && outro && isFinite(videoRef.current.duration))
+    videoRef.current.currentTime = outro.end;
+}}
           className="absolute bottom-20 right-4 z-20 bg-accent/90 hover:bg-accent text-white text-sm font-semibold px-4 py-2 rounded-lg border border-accent/50 transition-colors flex items-center gap-2"
         >
           Skip Outro <ChevronRight className="w-4 h-4" />

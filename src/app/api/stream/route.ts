@@ -1,18 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+export const maxDuration = 30; // Vercel Pro: 30s, Hobby: 10s max
+
 export async function GET(req: NextRequest) {
   const urlParam = req.nextUrl.searchParams.get('url');
-  if (!urlParam) return new NextResponse('Missing url param', { status: 400 });
+  if (!urlParam) return new NextResponse('Missing url', { status: 400 });
 
   const decoded = decodeURIComponent(urlParam);
 
   try {
     const res = await fetch(decoded, {
       headers: {
-        Referer: 'https://megacloud.blog/',
-        Origin: 'https://megacloud.blog',
-        'User-Agent':
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Referer': 'https://megacloud.blog/',
+        'Origin': 'https://megacloud.blog',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': '*/*',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'Connection': 'keep-alive',
+        'Sec-Fetch-Dest': 'empty',
+        'Sec-Fetch-Mode': 'cors',
+        'Sec-Fetch-Site': 'cross-site',
       },
     });
 
@@ -21,10 +29,7 @@ export async function GET(req: NextRequest) {
     }
 
     const contentType = res.headers.get('content-type') ?? '';
-    const isM3U8 =
-      decoded.includes('.m3u8') ||
-      contentType.includes('mpegurl') ||
-      contentType.includes('x-mpegURL');
+    const isM3U8 = decoded.includes('.m3u8') || contentType.includes('mpegurl');
 
     if (isM3U8) {
       const text = await res.text();
@@ -35,15 +40,8 @@ export async function GET(req: NextRequest) {
         .map((line) => {
           const trimmed = line.trim();
           if (!trimmed || trimmed.startsWith('#')) return line;
-
-          let absoluteUrl: string;
-          if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
-            absoluteUrl = trimmed;
-          } else {
-            absoluteUrl = baseUrl + trimmed;
-          }
-
-          return `/api/stream?url=${encodeURIComponent(absoluteUrl)}`;
+          const absolute = trimmed.startsWith('http') ? trimmed : baseUrl + trimmed;
+          return `/api/stream?url=${encodeURIComponent(absolute)}`;
         })
         .join('\n');
 
@@ -56,11 +54,10 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    // Forward binary data (ts segments, vtt subtitles, etc.)
     const buffer = await res.arrayBuffer();
     return new NextResponse(buffer, {
       headers: {
-        'Content-Type': contentType || 'application/octet-stream',
+        'Content-Type': contentType || 'video/mp2t',
         'Access-Control-Allow-Origin': '*',
         'Cache-Control': 'public, max-age=3600',
       },
