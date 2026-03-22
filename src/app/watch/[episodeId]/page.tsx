@@ -14,7 +14,7 @@ import EpisodeList from '@/components/ui/EpisodeList';
 import { cn } from '@/lib/utils';
 import type { SubDubCategory, StreamSubtitle, StreamTimestamp } from '@/types/stream';
 
-const SmartPlayer = dynamic(() => import('@/components/ui/SmartPlayer'), {
+const VideoPlayer = dynamic(() => import('@/components/ui/VideoPlayer'), {
   ssr: false,
   loading: () => (
     <div className="w-full aspect-video bg-black flex items-center justify-center">
@@ -258,7 +258,7 @@ export default function WatchPage() {
 
             {/* Player */}
             {streamUrl && (
-              <SmartPlayer
+              <VideoPlayer
                 streamUrl={streamUrl}
                 subtitles={subtitles}
                 intro={intro}
@@ -267,8 +267,6 @@ export default function WatchPage() {
                 onEnded={() => nextEp && setCountdown(10)}
                 startTime={startTime}
                 title={`${info?.name ?? animeId} — Episode ${currentEp?.number ?? '?'}`}
-                animeId={animeId}
-                episodeNumber={currentEp?.number ?? 1}
               />
             )}
 

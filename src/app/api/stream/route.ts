@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 // Try Node.js runtime instead of Edge - might use different IP pool
-// export const runtime = 'edge';
-export const runtime = 'nodejs';
+export const runtime = 'edge';  // Changed back for Cloudflare compatibility
 export const maxDuration = 30; // Vercel Pro: 30s, Hobby: 10s max
 
 export async function GET(req: NextRequest) {
