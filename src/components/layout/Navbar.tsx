@@ -65,11 +65,11 @@ export default function Navbar() {
 
   const handleRandom = useCallback(async () => {
     try {
-      const res = await fetch('/api/proxy/api/v2/hianime/home');
+      const res = await fetch('/api/proxy/api/');
       const data = await res.json();
       const pool = [
-        ...(data?.data?.trendingAnimes || []),
-        ...(data?.data?.mostPopularAnimes || []),
+        ...(data?.results?.trending || []),
+        ...(data?.results?.mostPopular || []),
       ];
       if (pool.length > 0) {
         const random = pool[Math.floor(Math.random() * pool.length)];

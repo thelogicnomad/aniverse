@@ -30,4 +30,5 @@ export interface ScheduledAnime {
   jname: string;
   airingTimestamp: number;
   secondsUntilAiring: number;
+  episodeNumber?: number;
 }

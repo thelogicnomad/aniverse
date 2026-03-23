@@ -1,15 +1,22 @@
 'use client';
 
-import { Suspense } from 'react';
 import { useHome } from '@/hooks/useAnime';
 import HeroCarousel from '@/components/home/HeroCarousel';
 import AnimeRow from '@/components/home/AnimeRow';
 import ContinueWatching from '@/components/home/ContinueWatching';
 import GenreFilter from '@/components/home/GenreFilter';
-import { SkeletonHero, SkeletonRow } from '@/components/ui/SkeletonCard';
+import { SkeletonHero } from '@/components/ui/SkeletonCard';
 import AnimeCard from '@/components/ui/AnimeCard';
 
-function Top10Section({ animes }: { animes: { id: string; name: string; poster: string; rank: number; episodes?: { sub?: number | null; dub?: number | null } }[] }) {
+function Top10Section({ animes }: {
+  animes: {
+    id: string;
+    name: string;
+    poster: string;
+    rank?: number | null;
+    episodes?: { sub?: number | null; dub?: number | null };
+  }[];
+}) {
   return (
     <section>
       <h2 className="text-xl font-bold text-white flex items-center gap-2 mb-4">
@@ -18,7 +25,17 @@ function Top10Section({ animes }: { animes: { id: string; name: string; poster: 
       </h2>
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
         {animes.slice(0, 10).map((a) => (
-          <AnimeCard key={a.id} {...a} />
+          <AnimeCard
+            key={a.id}
+            id={a.id}
+            name={a.name}
+            poster={a.poster}
+            rank={a.rank ?? undefined}
+            episodes={{
+              sub: a.episodes?.sub ?? 0,
+              dub: a.episodes?.dub ?? 0,
+            }}
+          />
         ))}
       </div>
     </section>

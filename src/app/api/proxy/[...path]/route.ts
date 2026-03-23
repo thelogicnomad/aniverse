@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const BASE = 'https://aniwatch-api-tan-psi.vercel.app';
+const BASE = 'https://test-new-anime-api.vercel.app';
 
-// These endpoints change per-request — never cache them
-const NO_CACHE_PATHS = ['/episode/sources', '/episode/servers'];
+const NO_CACHE_PATHS = ['/stream', '/servers'];
 
 export async function GET(
   req: NextRequest,

@@ -48,70 +48,49 @@ function useStreamSource(
   const abortRef = useRef<AbortController | null>(null);
 
   const tryServers = useCallback(async (servers: string[], signal: AbortSignal) => {
-    console.log('[WatchPage] Starting server iteration with', servers.length, 'servers:', servers);
-
     for (const server of servers) {
-      if (signal.aborted) {
-        console.log('[WatchPage] Request aborted');
-        return;
-      }
+      if (signal.aborted) return;
       setState(s => ({ ...s, isLoading: true, activeServer: server }));
-      console.log('[WatchPage] Trying server:', server);
 
       try {
-        const url = `/api/proxy/api/v2/hianime/episode/sources?animeEpisodeId=${encodeURIComponent(episodeId)}?server=${server}&category=${category}`;
-        console.log('[WatchPage] Fetching:', url);
+        const url = `/api/proxy/api/stream?id=${encodeURIComponent(episodeId)}&server=${encodeURIComponent(server)}&type=${encodeURIComponent(category)}`;
 
         const res = await fetch(url, { signal, cache: 'no-store' });
-        console.log('[WatchPage] Server', server, 'response status:', res.status);
 
-        if (!res.ok) {
-          console.log(`[WatchPage] ${server} → HTTP ${res.status}`);
-          continue;
-        }
+        if (!res.ok) continue;
 
         const json = await res.json();
-        console.log('[WatchPage] Server', server, 'response data:', {
-          hasData: !!json?.data,
-          sourcesCount: json?.data?.sources?.length ?? 0,
-          subtitlesCount: json?.data?.subtitles?.length ?? 0,
-          hasIntro: !!json?.data?.intro,
-          hasOutro: !!json?.data?.outro,
+        const sl = json?.results?.streamingLink;
+
+        if (!sl?.link?.file) continue;
+
+        const m3u8 = String(sl.link.file);
+
+        if (!m3u8 || signal.aborted) continue;
+
+        const subtitleTracks: StreamSubtitle[] = Array.isArray(sl.tracks)
+          ? sl.tracks
+              .filter((t: Record<string, unknown>) => t.kind !== 'thumbnails')
+              .map((t: Record<string, unknown>) => ({
+                lang: String(t.label ?? ''),
+                url: String(t.file ?? ''),
+              }))
+          : [];
+
+        setState({
+          streamUrl: m3u8,
+          subtitles: subtitleTracks,
+          intro: sl.intro ?? undefined,
+          outro: sl.outro ?? undefined,
+          isLoading: false,
+          allFailed: false,
+          activeServer: server,
         });
-
-        const sources = json?.data?.sources ?? [];
-        if (!sources.length) {
-          console.log(`[WatchPage] ${server} → no sources in response`);
-          continue;
-        }
-
-        const m3u8 = sources.find((s: { isM3U8: boolean }) => s.isM3U8)?.url ?? sources[0]?.url;
-        console.log('[WatchPage] Found stream URL:', m3u8?.substring(0, 80) + '...');
-
-        if (!m3u8) continue;
-        if (!signal.aborted) {
-          console.log('[WatchPage] SUCCESS! Using server:', server);
-          setState({
-            streamUrl: m3u8,
-            subtitles: json.data.subtitles ?? [],
-            intro: json.data.intro,
-            outro: json.data.outro,
-            isLoading: false,
-            allFailed: false,
-            activeServer: server,
-          });
-        }
-        return; // success
+        return;
       } catch (err: unknown) {
-        if ((err as Error).name === 'AbortError') {
-          console.log('[WatchPage] Request aborted for server:', server);
-          return;
-        }
-        console.error(`[WatchPage] ${server} → fetch error:`, (err as Error).message);
+        if ((err as Error).name === 'AbortError') return;
       }
     }
-    // All exhausted
-    console.error('[WatchPage] ALL SERVERS FAILED');
     if (!signal.aborted) {
       setState(s => ({ ...s, isLoading: false, allFailed: true }));
     }
