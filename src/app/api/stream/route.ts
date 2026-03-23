@@ -1,34 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-export const runtime = 'edge';
-export const maxDuration = 30;
-
-const REFERER_LIST = [
-  'https://megacloud.tv/',
-  'https://rapid-cloud.co/',
-  'https://vidplay.online/',
-];
-
-async function fetchWithReferer(
-  url: string,
-  referer: string,
-  signal?: AbortSignal
-): Promise<Response> {
-  return fetch(url, {
-    signal,
-    headers: {
-      'Referer': referer,
-      'Origin': referer.replace(/\/$/, ''),
-      'User-Agent':
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
-      'Accept': '*/*',
-      'Accept-Language': 'en-US,en;q=0.9',
-      'Sec-Fetch-Dest': 'empty',
-      'Sec-Fetch-Mode': 'cors',
-      'Sec-Fetch-Site': 'cross-site',
-    },
-  });
-}
+export const runtime = 'nodejs';
+export const maxDuration = 60;
 
 export async function GET(req: NextRequest) {
   const urlParam = req.nextUrl.searchParams.get('url');
@@ -37,27 +10,19 @@ export async function GET(req: NextRequest) {
   const decoded = decodeURIComponent(urlParam);
 
   try {
-    let res: Response | null = null;
+    const res = await fetch(decoded, {
+      headers: {
+        'Referer': 'https://megacloud.tv/',
+        'Origin': 'https://megacloud.tv',
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+        'Accept': '*/*',
+        'Accept-Language': 'en-US,en;q=0.9',
+      },
+    });
 
-    for (const referer of REFERER_LIST) {
-      try {
-        const attempt = await fetchWithReferer(decoded, referer);
-        if (attempt.ok) {
-          res = attempt;
-          break;
-        }
-        if (attempt.status !== 403) {
-          res = attempt;
-          break;
-        }
-      } catch {
-        continue;
-      }
-    }
-
-    if (!res || !res.ok) {
-      const status = res?.status ?? 502;
-      return new NextResponse(`Upstream error: ${status}`, { status });
+    if (!res.ok) {
+      return new NextResponse(`Upstream error: ${res.status}`, { status: res.status });
     }
 
     const contentType = res.headers.get('content-type') ?? '';

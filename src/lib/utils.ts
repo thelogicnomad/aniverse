@@ -34,9 +34,9 @@ export function getProxiedImageUrl(url: string): string {
 }
 
 export function getProxiedStreamUrl(url: string): string {
-  return url;
+  return `/api/stream?url=${encodeURIComponent(url)}`;
 }
 
 export function getProxiedSubtitleUrl(url: string): string {
-  return url;
+  return `/api/stream?url=${encodeURIComponent(url)}`;
 }
