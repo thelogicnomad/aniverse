@@ -23,7 +23,7 @@ const VideoPlayer = dynamic(() => import('@/components/ui/VideoPlayer'), {
   ),
 });
 
-const PREFERRED_SERVERS = ['hd-1', 'hd-2', 'vidstreaming', 'megacloud', 'streamtape'];
+const STREAM_SERVERS = ['hd-1', 'hd-2'];
 
 // ─── Imperative stream fetcher — tries each server in order, no React Query ──
 interface StreamState {
@@ -104,8 +104,8 @@ function useStreamSource(
     setState({ streamUrl: '', subtitles: [], isLoading: true, allFailed: false, activeServer: availableServers[0] });
     // Sort by preference before trying
     const sorted = [
-      ...PREFERRED_SERVERS.filter(s => availableServers.includes(s)),
-      ...availableServers.filter(s => !PREFERRED_SERVERS.includes(s)),
+      ...STREAM_SERVERS.filter(s => availableServers.includes(s)),
+      ...availableServers.filter(s => !STREAM_SERVERS.includes(s)),
     ];
     tryServers(sorted, controller.signal);
     return () => { controller.abort(); };
@@ -120,8 +120,8 @@ function useStreamSource(
     abortRef.current = controller;
     setState({ streamUrl: '', subtitles: [], isLoading: true, allFailed: false, activeServer: availableServers[0] });
     const sorted = [
-      ...PREFERRED_SERVERS.filter(s => availableServers.includes(s)),
-      ...availableServers.filter(s => !PREFERRED_SERVERS.includes(s)),
+      ...STREAM_SERVERS.filter(s => availableServers.includes(s)),
+      ...availableServers.filter(s => !STREAM_SERVERS.includes(s)),
     ];
     tryServers(sorted, controller.signal);
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -154,7 +154,8 @@ export default function WatchPage() {
   const nextEp = episodes[currentIdx + 1];
   const prevEp = episodes[currentIdx - 1];
 
-  const availableServers = (serversData?.[category] ?? []).map(s => s.serverName);
+  const categoryHasServers = (serversData?.[category] ?? []).length > 0;
+  const availableServers = categoryHasServers ? STREAM_SERVERS : [];
   const hasDub = (serversData?.dub?.length ?? 0) > 0;
   const hasRaw = (serversData?.raw?.length ?? 0) > 0;
 

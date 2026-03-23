@@ -128,7 +128,7 @@ export async function getEpisodes(animeId: string): Promise<EpisodesData> {
       number: Number(ep.episode_no ?? 0),
       title: String(ep.title ?? ep.jname ?? `Episode ${ep.episode_no}`),
       episodeId: String(ep.id ?? ''),
-      isFiller: false,
+      isFiller: ep.filler === true,
     })),
   };
 }
